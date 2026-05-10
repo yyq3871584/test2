@@ -8,7 +8,7 @@ export const categories: Category[] = [
 ];
 
 export const menuItems: MenuItem[] = [
-  { id: '101', category_id: '1', name: '卤鸡腿', price: 12, unit: '个' },
+  { id: '101', category_id: '1', name: '卤鸡腿02', price: 12, unit: '个' },
   { id: '102', category_id: '1', name: '卤鸡翅', price: 8, unit: '个' },
   { id: '103', category_id: '1', name: '卤鸭脖', price: 6, unit: '根' },
   { id: '104', category_id: '1', name: '卤豆干', price: 3, unit: '块' },
