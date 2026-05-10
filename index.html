@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小吃店点餐系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #ff6b35;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 20px;
+        }
+
+        .stats-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .stats-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #ddd;
+            background: white;
+        }
+
+        .categories {
+            display: flex;
+            padding: 10px;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid #eee;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .category-btn.active {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .menu-grid {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            align-content: start;
+        }
+
+        .menu-item {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .menu-item:hover {
+            border-color: #ff6b35;
+            transform: translateY(-2px);
+        }
+
+        .menu-item .name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .menu-item .price {
+            color: #ff6b35;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .menu-item .unit {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .right-panel {
+            width: 320px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .cart-item-price {
+            color: #ff6b35;
+            font-size: 13px;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .qty-num {
+            min-width: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cart-footer {
+            padding: 15px;
+            border-top: 2px solid #ff6b35;
+            background: #fffaf8;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .cart-total .price {
+            color: #ff6b35;
+        }
+
+        .pay-btn {
+            width: 100%;
+            padding: 14px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .pay-btn:hover {
+            background: #e55a2b;
+        }
+
+        .pay-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            width: 340px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .receipt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+
+        .receipt-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-top: 1px dashed #ddd;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .close-btn {
+            width: 100%;
+            padding: 10px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .stats-modal .modal-content {
+            width: 300px;
+        }
+
+        .stats-info {
+            text-align: center;
+        }
+
+        .stats-info .label {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .stats-info .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stats-row .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .orders-modal .modal-content {
+            width: 600px;
+            max-height: 80vh;
+        }
+
+        .order-item-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+
+        .order-item-table th,
+        .order-item-table td {
+            padding: 6px 4px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-item-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .order-item-table .col-time {
+            width: 85px;
+        }
+
+        .order-item-table .col-name {
+            width: auto;
+        }
+
+        .order-item-table .col-qty {
+            width: 45px;
+            text-align: center;
+        }
+
+        .order-item-table .col-price {
+            width: 55px;
+            text-align: right;
+        }
+
+        .order-item-table .col-amount {
+            width: 60px;
+            text-align: right;
+        }
+
+        .order-section {
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 10px;
+        }
+
+        .order-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .order-header {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .order-summary {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #ff6b35;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .order-summary .total {
+            color: #ff6b35;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .orders-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🍖 小吃店点餐系统</h1>
+        <div class="header-btns">
+            <button class="stats-btn" onclick="showOrders()">今日订单明细</button>
+            <button class="stats-btn" onclick="showStats()">今日统计</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <div class="categories" id="categories"></div>
+            <div class="menu-grid" id="menuGrid"></div>
+        </div>
+
+        <div class="right-panel">
+            <div class="cart-header">购物车</div>
+            <div class="cart-items" id="cartItems"></div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>合计</span>
+                    <span class="price">¥<span id="totalPrice">0</span></span>
+                </div>
+                <button class="pay-btn" id="payBtn" onclick="placeOrder()">下单支付</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="modal" id="receiptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✅ 支付成功</h2>
+            </div>
+            <div id="receiptContent"></div>
+            <button class="close-btn" onclick="closeReceipt()">完成</button>
+        </div>
+    </div>
+
+    <div class="modal stats-modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 今日统计</h2>
+            </div>
+            <div class="stats-info" id="statsContent"></div>
+            <button class="close-btn" onclick="closeStats()">关闭</button>
+        </div>
+    </div>
+
+    <div class="modal orders-modal" id="ordersModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 今日订单明细</h2>
+            </div>
+            <div id="ordersContent"></div>
+            <button class="close-btn" onclick="closeOrders()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        let menuData = { categories: [], items: [] };
+        let cart = [];
+        let currentCategory = null;
+
+        async function loadMenu() {
+            const res = await fetch('/api/menu');
+            menuData = await res.json();
+            renderCategories();
+            if (menuData.categories.length > 0) {
+                selectCategory(menuData.categories[0].id);
+            }
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categories');
+            container.innerHTML = menuData.categories.map(cat => `
+                <button class="category-btn ${currentCategory === cat.id ? 'active' : ''}"
+                        onclick="selectCategory('${cat.id}')">
+                    ${cat.icon} ${cat.name}
+                </button>
+            `).join('');
+        }
+
+        function selectCategory(catId) {
+            currentCategory = catId;
+            renderCategories();
+            renderMenu();
+        }
+
+        function renderMenu() {
+            const grid = document.getElementById('menuGrid');
+            const items = menuData.items.filter(item => item.category_id === currentCategory);
+            grid.innerHTML = items.map(item => `
+                <div class="menu-item" onclick="addToCart('${item.id}')">
+                    <div class="name">${item.name}</div>
+                    <div class="price">¥${item.price}</div>
+                    <div class="unit">/${item.unit}</div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(itemId) {
+            const item = menuData.items.find(i => i.id === itemId);
+            const exist = cart.find(c => c.id === itemId);
+
+            if (exist) {
+                exist.quantity++;
+            } else {
+                cart.push({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: 1
+                });
+            }
+            renderCart();
+        }
+
+        function changeQty(itemId, delta) {
+            const exist = cart.find(c => c.id === itemId);
+            if (exist) {
+                exist.quantity += delta;
+                if (exist.quantity <= 0) {
+                    cart = cart.filter(c => c.id !== itemId);
+                }
+            }
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cartItems');
+            const totalEl = document.getElementById('totalPrice');
+            const payBtn = document.getElementById('payBtn');
+
+            if (cart.length === 0) {
+                container.innerHTML = '<div class="empty-cart">购物车为空<br>点击左侧菜品添加</div>';
+                totalEl.textContent = '0';
+                payBtn.disabled = true;
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-info">
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">¥${item.price}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">-</button>
+                        <span class="qty-num">${item.quantity}</span>
+                        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            totalEl.textContent = total.toFixed(1);
+            payBtn.disabled = false;
+        }
+
+        async function placeOrder() {
+            if (cart.length === 0) return;
+
+            const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const items = cart.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            }));
+
+            const orderRes = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items, total_price: total })
+            });
+            const orderData = await orderRes.json();
+
+            const payRes = await fetch(`/api/orders/${orderData.id}/pay`, { method: 'POST' });
+            const payData = await payRes.json();
+
+            showReceipt(items, total, payData.order_no, payData.paid_at);
+            cart = [];
+            renderCart();
+        }
+
+        function showReceipt(items, total, orderNo, paidAt) {
+            const modal = document.getElementById('receiptModal');
+            const content = document.getElementById('receiptContent');
+
+            const date = new Date(paidAt).toLocaleString('zh-CN');
+
+            content.innerHTML = `
+                <div style="text-align:center;margin-bottom:10px;">
+                    <div style="font-size:12px;color:#666;">订单号</div>
+                    <div style="font-weight:bold;">${orderNo}</div>
+                </div>
+                <div style="border-bottom:1px dashed #ddd;padding-bottom:10px;margin-bottom:10px;">
+                    ${items.map(item => `
+                        <div class="receipt-item">
+                            <span>${item.name} x${item.quantity}</span>
+                            <span>¥${(item.price * item.quantity).toFixed(1)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="receipt-total">
+                    <span>合计</span>
+                    <span>¥${total.toFixed(1)}</span>
+                </div>
+                <div class="receipt-footer">
+                    支付时间：${date}<br>
+                    谢谢惠顾，欢迎下次光临！
+                </div>
+            `;
+
+            modal.classList.add('show');
+
+            setTimeout(() => {
+                printReceipt(items, total, orderNo, date);
+            }, 300);
+        }
+
+        function closeReceipt() {
+            document.getElementById('receiptModal').classList.remove('show');
+        }
+
+        async function showStats() {
+            const res = await fetch('/api/stats/today');
+            const stats = await res.json();
+
+            const content = document.getElementById('statsContent');
+            content.innerHTML = `
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <div class="label">订单数</div>
+                        <div class="value">${stats.order_count}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="label">营收</div>
+                        <div class="value">¥${stats.total_revenue.toFixed(1)}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('statsModal').classList.add('show');
+        }
+
+        function closeStats() {
+            document.getElementById('statsModal').classList.remove('show');
+        }
+
+        async function showOrders() {
+            const res = await fetch('/api/orders/today');
+            const data = await res.json();
+            const orders = data.orders;
+
+            const content = document.getElementById('ordersContent');
+
+            if (orders.length === 0) {
+                content.innerHTML = '<div class="orders-empty">今日暂无订单</div>';
+                document.getElementById('ordersModal').classList.add('show');
+                return;
+            }
+
+            let ordersHtml = '';
+            let grandTotal = 0;
+
+            for (const order of orders) {
+                const paidAt = new Date(order.paid_at);
+                const timeStr = paidAt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                grandTotal += order.total_price;
+
+                ordersHtml += `
+                    <div class="order-section">
+                        <div class="order-header">订单号: ${order.order_no} | ${paidAt.toLocaleString('zh-CN')}</div>
+                        <table class="order-item-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-time">时间</th>
+                                    <th class="col-name">菜名</th>
+                                    <th class="col-qty">数量</th>
+                                    <th class="col-price">单价</th>
+                                    <th class="col-amount">金额</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items.map(item => `
+                                    <tr>
+                                        <td>${timeStr}</td>
+                                        <td>${item.name}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>¥${item.price.toFixed(1)}</td>
+                                        <td>¥${(item.price * item.quantity).toFixed(1)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            ordersHtml += `
+                <div class="order-summary">
+                    <span>汇总合计</span>
+                    <span class="total">¥${grandTotal.toFixed(1)}</span>
+                </div>
+            `;
+
+            content.innerHTML = ordersHtml;
+            document.getElementById('ordersModal').classList.add('show');
+        }
+
+        function closeOrders() {
+            document.getElementById('ordersModal').classList.remove('show');
+        }
+
+        function printReceipt(items, total, orderNo, date) {
+            const printWindow = window.open('', '_blank', 'width=300,height=600');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>小票</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', monospace;
+                            width: 280px;
+                            padding: 20px;
+                            margin: 0 auto;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 15px;
+                        }
+                        .header h2 {
+                            margin: 0 0 5px 0;
+                        }
+                        .divider {
+                            border-top: 1px dashed #000;
+                            margin: 10px 0;
+                        }
+                        .item {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 5px 0;
+                        }
+                        .total {
+                            font-weight: bold;
+                            margin-top: 10px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 15px;
+                            font-size: 12px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>🍖 小吃店</h2>
+                        <div>订单号：${orderNo}</div>
+                        <div>时间：${date}</div>
+                    </div>
+                    <div class="divider"></div>
+                    ${items.map(item => `
+                        <div class="item">
+                            <span>${item.name} x${item.quantity}</span>
+                            <span>¥${(item.price * item.quantity).toFixed(1)}</span>
+                        </div>
+                    `).join('')}
+                    <div class="divider"></div>
+                    <div class="item total">
+                        <span>合计</span>
+                        <span>¥${total.toFixed(1)}</span>
+                    </div>
+                    <div class="footer">
+                        <p>谢谢惠顾，欢迎下次光临！</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCart();
+            loadMenu();
+        });
+    </script>
+</body>
+</html>
